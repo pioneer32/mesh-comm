@@ -1,0 +1,6 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {},
+  "include": ["global.d.ts", "src/**/*"],
+  "types": ["jest", "node", "systemjs"]
+}

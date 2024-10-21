@@ -1,0 +1,67 @@
+{
+  "name": "mesh-comm",
+  "version": "0.0.0",
+  "license": "MIT",
+  "author": "Vlad Churakov",
+  "scripts": {
+    "clean": "rm -rf ./dist/*",
+    "prepack": "npm run clean; npm run prepack:esm",
+    "prepack:esm": "tsc -p ./tsconfig.esm.json",
+    "test": "FORCE_COLOR=1 npm exec -- jest --runInBand --passWithNoTests",
+    "test:watch": "FORCE_COLOR=1 npm exec -- jest --watch",
+    "typecheck": "tsc -noEmit -p ./tsconfig.build.json && tsc -noEmit -p ./tsconfig.test.json",
+    "prepublishOnly": "./scripts/patch-package_json.cjs",
+    "postpublish": "git checkout ./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "!**/*.test.ts",
+    "!**/*.test.tsx",
+    "!**/*.tsbuildinfo"
+  ],
+  "type": "module",
+  "main": "",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./src/index.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./src/*",
+        "./dist/types/*"
+      ]
+    }
+  },
+  "bin": {
+    "flags": "./dist/cli.cjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pioneer32/mesh-comm.git",
+    "directory": "packages/mesh-comm"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "ts-custom-error": "^3.3.1",
+    "ts-node": "^10.9.1",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.0",
+    "@types/node": "~18.15.3",
+    "jest": "^29.1.0",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
