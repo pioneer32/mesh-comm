@@ -5,19 +5,22 @@
   "author": "Vlad Churakov",
   "scripts": {
     "clean": "rm -rf ./dist/*",
-    "prepack": "npm run clean; npm run prepack:esm",
+    "prepack": "npm run clean; npm run prepack:cjs && npm run prepack:esm && npm run prepack:types",
+    "prepack:cjs": "tsc -p ./tsconfig.cjs.json",
     "prepack:esm": "tsc -p ./tsconfig.esm.json",
+    "prepack:types": "tsc -p ./tsconfig.types.json",
     "test": "FORCE_COLOR=1 npm exec -- jest --runInBand --passWithNoTests",
     "test:watch": "FORCE_COLOR=1 npm exec -- jest --watch",
     "typecheck": "tsc -noEmit -p ./tsconfig.build.json && tsc -noEmit -p ./tsconfig.test.json",
-    "prepublishOnly": "./scripts/patch-package_json.cjs",
-    "postpublish": "git checkout ./package.json"
+    "prepublishOnly": "./scripts/patch-package_json.cjs && cp ../../README.md ./",
+    "postpublish": "unlink ./README.md; git checkout ./package.json"
   },
   "publishConfig": {
     "access": "public"
   },
   "files": [
     "dist",
+    "README.md",
     "!**/*.test.ts",
     "!**/*.test.tsx",
     "!**/*.tsbuildinfo"

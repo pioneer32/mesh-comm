@@ -1,13 +1,14 @@
 {
-  "$schema": "http://json.schemastore.org/tsconfig",
-  "extends": "../../tsconfig.json",
+  "$schema": "https://json.schemastore.org/tsconfig.json",
+  "extends": "../../tsconfig",
   "compilerOptions": {
+    "allowJs": false,
     "composite": false,
-    "isolatedModules": false,
-    "lib": ["ES2022", "DOM"],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "target": "ES2022"
-  },
-  "include": ["./src/"]
+    "incremental": true,
+    "module": "CommonJS",
+    "typeRoots": ["../../node_modules/@types", "./types"],
+    "types": ["jest"],
+    "lib": ["ES2020", "DOM"],
+    "target": "ES2020"
+  }
 }
