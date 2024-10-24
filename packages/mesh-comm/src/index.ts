@@ -1,6 +1,6 @@
 import MeshRequest from './MeshRequest.js';
 import { assertEndpoinIsValid, assertPatternIsValid, extractPattern, isMeshEvent, match } from './utils.js';
-import logger from './logger.js';
+import Logger from './logger.js';
 import { MESH_PROTO } from './const.js';
 import { MeshEventData, MeshEventType } from './types.js';
 
@@ -54,7 +54,7 @@ const createInternalListener = (name: string, nodeId: string, endpoint: string, 
   };
 };
 
-const MeshComm = (name: string) => {
+function MeshComm(name: string) {
   const requests = new Map<string, MeshRequest>();
   const connId = `conn#${Math.random().toString(36).slice(2)}`;
 
@@ -139,7 +139,7 @@ const MeshComm = (name: string) => {
       assertPatternIsValid(pattern);
       return new Promise<R>((resolve, reject) => {
         const timeout = opts?.timeout || 5_000;
-        const request = new MeshRequest({
+        const request = new MeshRequest(`req#${Math.random().toString(36).slice(2)}::${connId}`, {
           pattern,
           resolve,
           reject,
@@ -152,7 +152,10 @@ const MeshComm = (name: string) => {
       });
     },
   };
-};
+}
 
-MeshComm.logger = logger;
-export default MeshComm as typeof MeshComm & { logger: typeof logger };
+namespace MeshComm {
+  export const logger = Logger;
+}
+
+export default MeshComm;

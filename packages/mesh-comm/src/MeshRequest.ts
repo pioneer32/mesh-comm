@@ -1,10 +1,10 @@
 import { AbortError, MeshNoNodeError, MeshTimeoutError } from './MeshError.js';
 
 class MeshRequest {
-  private timeoutTimer: ReturnType<typeof setTimeout>;
+  private timeoutTimer!: ReturnType<typeof setTimeout>;
   private _phase: 'proposed' | 'sent' | 'timedout' | 'aborted' | 'done';
-  readonly id = `req#${Math.random().toString(36).slice(2)}`;
   constructor(
+    public readonly id: string,
     private props: {
       pattern: string;
       resolve: (res: any) => void;
@@ -15,7 +15,10 @@ class MeshRequest {
     }
   ) {
     this._phase = 'proposed';
-    this.timeoutTimer = setTimeout(this.onInternalTimeout, props.timeout);
+    // N.B. setTimeout accepts int32, when we pass anything greater than 2^32 it fires immediately, which could be really unexpected when passing in timeout: Number.MAX_SAFE_INTEGER
+    if (props.timeout < 0x7fffffff) {
+      this.timeoutTimer = setTimeout(this.onInternalTimeout, props.timeout);
+    }
     this.props.abortSignal?.addEventListener('abort', this.onExternalAbort);
   }
 
@@ -31,7 +34,9 @@ class MeshRequest {
     clearTimeout(this.timeoutTimer);
     if (['proposed', 'sent'].includes(this._phase)) {
       this.props.reject(
-        this._phase === 'proposed' ? new MeshNoNodeError(`No node responded from endpoints matching "${this.props.pattern}"`) : new MeshTimeoutError()
+        this._phase === 'proposed'
+          ? new MeshNoNodeError(`No node responded to ${this.id} from endpoints matching "${this.props.pattern}"`)
+          : new MeshTimeoutError(`No response received for request ${this.id} within within ${this.props.timeout} ms`)
       );
     }
   };
