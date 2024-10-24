@@ -1,3 +1,6 @@
+import { MeshEventData } from './types.js';
+import { MESH_PROTO } from './const.js';
+
 export const match = (endpoint: string, pattern: string) => {
   const endpointParts = endpoint.split('/');
   const patternParts = pattern.split('/');
@@ -33,3 +36,9 @@ export const assertEndpoinIsValid = (endpoint: string) => {
   }
 };
 
+export const isMeshEvent = (ev: MessageEvent, name?: string): ev is MessageEvent<MeshEventData & { tgt: string }> => {
+  const tgt = (ev?.data as MeshEventData & { tgt: string }).tgt;
+  return (name === undefined ? tgt?.indexOf(`${MESH_PROTO}//`) : tgt?.indexOf(`${MESH_PROTO}//${name}/`)) === 0;
+};
+
+export const extractPattern = (ev: MessageEvent<MeshEventData & { tgt: string }>, name: string) => ev.data.tgt.slice(12 + name.length);

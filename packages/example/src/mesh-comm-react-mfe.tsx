@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom';
 import singleSpaReact from 'single-spa-react';
 import MeshComm from 'mesh-comm';
 
+MeshComm.logger.enable();
+
 const mesh = MeshComm('my-mesh');
 
 let cnt = 1;

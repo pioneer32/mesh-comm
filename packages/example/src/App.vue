@@ -20,9 +20,9 @@
 
 <script>
 import { defineComponent, ref, onMounted, onBeforeUnmount } from 'vue';
-import singleSpaVue from 'single-spa-vue';
 import MeshComm from 'mesh-comm';
-import React from 'react';
+
+MeshComm.logger.enable();
 
 const mesh = MeshComm('my-mesh');
 let cnt = 1;

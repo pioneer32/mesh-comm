@@ -11,7 +11,7 @@ handling **messages**.
 
 MeshComm supports two types of communication:
 
-- **Broadcast Messages**: Send messages to all nodes or filter them using patterns (e.g., wildcards like *).
+- **Broadcast Messages**: Send messages to all nodes or filter them using patterns (e.g., wildcards like \*).
 - **Request-Response Messages**: Send requests to specific nodes and expect a response (for each request, only one node will send a response, even if multiple nodes can handle the message).
 
 Nodes can be marked as **exclusive**, meaning only one node can occupy a specific endpoint, ensuring no conflicts. In contrast, **non-exclusive** nodes can share the same endpoint, allowing multiple nodes to coexist at the same
@@ -192,6 +192,18 @@ try {
 }
 ```
 
+## Debugging
+
+If you need to debug communications between nodes, `mesh-comm` provides an easy way to see all message exchanges in the console.
+
+To enable logging, simply add into your script:
+
+```typescript
+MeshComm.logger.enable();
+```
+
+This will echo all communication between nodes to the console, which can be useful for tracking messages, requests, and responses during development.
+
 ## Security Considerations
 
 MeshComm leverages the `window.postMessage` API for communication, which ensures that messages can only be transmitted within the same window object. Currently, the library does not support communication across multiple window instances or
@@ -207,6 +219,7 @@ built-in security feature ensures that malicious scripts or unauthorized third p
 - Enforces same-origin communication to prevent unauthorized message interception or sending.
 
 ## Playground
+
 Please see [packages/example](packages/example)
 
 ## License

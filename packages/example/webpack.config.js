@@ -18,6 +18,9 @@ module.exports = (webpackConfigEnv, argv) => {
     },
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.vue'],
+      extensionAlias: {
+        '.js': ['.js', '.ts'],
+      },
     },
     externals: ['react', 'react-dom', 'jquery'],
     module: {

@@ -3,7 +3,7 @@ import { AbortError, MeshNoNodeError, MeshTimeoutError } from './MeshError.js';
 class MeshRequest {
   private timeoutTimer: ReturnType<typeof setTimeout>;
   private _phase: 'proposed' | 'sent' | 'timedout' | 'aborted' | 'done';
-  readonly id = Math.random().toString(36).slice(2);
+  readonly id = `req#${Math.random().toString(36).slice(2)}`;
   constructor(
     private props: {
       pattern: string;

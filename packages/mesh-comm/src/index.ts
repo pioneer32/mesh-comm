@@ -1,50 +1,10 @@
 import MeshRequest from './MeshRequest.js';
-import { assertEndpoinIsValid, assertPatternIsValid, match } from './utils.js';
+import { assertEndpoinIsValid, assertPatternIsValid, extractPattern, isMeshEvent, match } from './utils.js';
+import logger from './logger.js';
+import { MESH_PROTO } from './const.js';
+import { MeshEventData, MeshEventType } from './types.js';
 
 export { MeshTimeoutError, MeshNoNodeError, AbortError } from './MeshError.js';
-
-const MESH_PROTO = 'mesh-comm:';
-
-enum MeshEventType {
-  BROADCAST = 'BRD',
-  ANNOUNCE = 'ANN',
-  PROPOSE = 'PRO',
-  ACKNOWLEDGE = 'ACK',
-  REQUEST = 'REQ',
-  RESPONSE = 'RES',
-}
-
-type MeshEventData =
-  | {
-      t: MeshEventType.BROADCAST;
-      payload: any;
-    }
-  | {
-      t: MeshEventType.REQUEST;
-      rId: string;
-      nId: string;
-      payload: any;
-    }
-  | {
-      t: MeshEventType.ACKNOWLEDGE;
-      rId: string;
-      nId: string;
-    }
-  | ({
-      t: MeshEventType.RESPONSE;
-      rId: string;
-    } & (
-      | {
-          res: true;
-          payload: any;
-        }
-      | {
-          res: false;
-          err: string;
-        }
-    ))
-  | { t: MeshEventType.PROPOSE; rId: string }
-  | { t: MeshEventType.ANNOUNCE; ep: string };
 
 const send = (name: string, pattern: string, data: MeshEventData) => {
   const tgt = `${MESH_PROTO}//${name}/${pattern.replace(/^\/+|\/+$/gi, '')}`;
@@ -53,15 +13,12 @@ const send = (name: string, pattern: string, data: MeshEventData) => {
 
 const createInternalListener = (name: string, nodeId: string, endpoint: string, listener: (msg: any) => any | Promise<any>) => {
   return async (ev: MessageEvent) => {
-    const data = ev.data as MeshEventData;
-    if (!data || ev.source !== window || ev.origin !== window.origin) {
+    if (!isMeshEvent(ev, name) || ev.source !== window || ev.origin !== window.origin) {
       return;
     }
-    const tgt = (data as MeshEventData & { tgt: string }).tgt;
-    if (tgt?.indexOf(`${MESH_PROTO}//${name}/`) !== 0) {
-      return;
-    }
-    const pattern = tgt.slice(12 + name.length);
+    const data = ev.data;
+
+    const pattern = extractPattern(ev, name);
 
     switch (data.t) {
       case MeshEventType.BROADCAST: {
@@ -79,9 +36,9 @@ const createInternalListener = (name: string, nodeId: string, endpoint: string, 
         const requestId = data.rId;
         try {
           const res = await listener(data.payload);
-          send(name, `/`, { t: MeshEventType.RESPONSE, res: true, rId: requestId, payload: res });
+          send(name, `/`, { t: MeshEventType.RESPONSE, res: true, rId: requestId, payload: res, s: nodeId });
         } catch (error) {
-          send(name, `/`, { t: MeshEventType.RESPONSE, res: false, err: (error as Error)?.message, rId: requestId });
+          send(name, `/`, { t: MeshEventType.RESPONSE, res: false, err: (error as Error)?.message, rId: requestId, s: nodeId });
         }
         return;
       }
@@ -90,7 +47,7 @@ const createInternalListener = (name: string, nodeId: string, endpoint: string, 
         if (!match(endpoint, pattern) || !data.rId) {
           return;
         }
-        send(name, `/`, { t: MeshEventType.ACKNOWLEDGE, nId: nodeId, rId: data.rId });
+        send(name, `/`, { t: MeshEventType.ACKNOWLEDGE, nId: nodeId, rId: data.rId, s: nodeId });
         return;
       }
     }
@@ -99,6 +56,7 @@ const createInternalListener = (name: string, nodeId: string, endpoint: string, 
 
 const MeshComm = (name: string) => {
   const requests = new Map<string, MeshRequest>();
+  const connId = `conn#${Math.random().toString(36).slice(2)}`;
 
   // Let's add the utility listener
   window.addEventListener('message', (ev: MessageEvent) => {
@@ -122,7 +80,7 @@ const MeshComm = (name: string) => {
         [...requests.values()]
           .filter((req) => req.phase === 'proposed' && match(data.ep, req.pattern))
           .forEach((req) => {
-            send(name, req.pattern, { t: MeshEventType.PROPOSE, rId: req.id });
+            send(name, req.pattern, { t: MeshEventType.PROPOSE, rId: req.id, s: connId });
           });
         return;
       }
@@ -140,7 +98,7 @@ const MeshComm = (name: string) => {
             return;
           }
           request.ack();
-          send(name, `/`, { t: MeshEventType.REQUEST, nId: data.nId, rId: data.rId, payload: request.payload });
+          send(name, `/`, { t: MeshEventType.REQUEST, nId: data.nId, rId: data.rId, payload: request.payload, s: connId });
         }, Math.random() * 7);
         return;
       }
@@ -164,17 +122,17 @@ const MeshComm = (name: string) => {
 
   return {
     add(endpoint: string, listener: (msg: any) => void | any | Promise<any>, _opts?: { exclusive?: boolean }) {
-      const nodeId = `${endpoint}#${Math.random().toString(36).slice(2)}`;
+      const nodeId = `node#${Math.random().toString(36).slice(2)}@${endpoint}::${connId}`;
       assertEndpoinIsValid(endpoint);
       const internalListener = createInternalListener(name, nodeId, endpoint, listener);
       window.addEventListener('message', internalListener);
-      send(name, '/', { t: MeshEventType.ANNOUNCE, ep: endpoint });
+      send(name, '/', { t: MeshEventType.ANNOUNCE, ep: endpoint, s: nodeId });
       return () => window.removeEventListener('message', internalListener);
     },
 
     send(pattern: string, msg: any) {
       assertPatternIsValid(pattern);
-      send(name, pattern, { t: MeshEventType.BROADCAST, payload: msg });
+      send(name, pattern, { t: MeshEventType.BROADCAST, payload: msg, s: connId });
     },
 
     request<R = unknown>(pattern: string, msg: any, opts?: { abortSignal?: AbortSignal; timeout?: number }) {
@@ -190,9 +148,11 @@ const MeshComm = (name: string) => {
           payload: msg,
         });
         requests.set(request.id, request);
-        send(name, pattern, { t: MeshEventType.PROPOSE, rId: request.id });
+        send(name, pattern, { t: MeshEventType.PROPOSE, rId: request.id, s: connId });
       });
     },
   };
 };
-export default MeshComm;
+
+MeshComm.logger = logger;
+export default MeshComm as typeof MeshComm & { logger: typeof logger };

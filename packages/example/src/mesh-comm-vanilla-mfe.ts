@@ -2,6 +2,8 @@ import singleSpaHtml from 'single-spa-html';
 import $ from 'jquery';
 import MeshComm from 'mesh-comm';
 
+MeshComm.logger.enable();
+
 const mesh = MeshComm('my-mesh');
 
 const lifecycles = singleSpaHtml({
