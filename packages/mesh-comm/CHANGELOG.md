@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.4](https://github.com/pioneer32/mesh-comm/compare/v0.0.3...v0.0.4) (2024-10-24)
+
+### Bug Fixes
+
+- setting timeout to Number.MAX_SAFE_INTEGER shoule not result in timing requests imediatelly ([7f7bfe2](https://github.com/pioneer32/mesh-comm/commit/7f7bfe29743cdbca6ed8d79206f44c05fd7d6600))
+
 ## [0.0.3](https://github.com/pioneer32/mesh-comm/compare/v0.0.2...v0.0.3) (2024-10-24)
 
 ### Features
