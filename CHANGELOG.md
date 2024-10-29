@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.0.5](https://github.com/pioneer32/mesh-comm/compare/v0.0.4...v0.0.5) (2024-10-29)
+
+### Bug Fixes
+
+- remove unused dependencies ([4c05622](https://github.com/pioneer32/mesh-comm/commit/4c05622b2c0eda29d3adee40ffaceb5e0419e169))
+- switch Loger onto console.debug ([185bdbd](https://github.com/pioneer32/mesh-comm/commit/185bdbd952951f9c5db168591064411cab1d268a))
+
 ## [0.0.4](https://github.com/pioneer32/mesh-comm/compare/v0.0.3...v0.0.4) (2024-10-24)
 
 ### Bug Fixes
